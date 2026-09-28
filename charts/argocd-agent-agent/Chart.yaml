@@ -1,0 +1,26 @@
+apiVersion: v2
+name: argocd-agent-agent
+description: Argo CD Agent for connecting managed clusters to a Principal
+
+type: application
+
+# chart version
+version: 0.2.7
+
+# application version, ArgoCD Agent version
+appVersion: v0.8.1
+
+
+home: https://github.com/argoproj-labs/argocd-agent
+sources:
+  - https://github.com/argoproj-labs/argocd-agent
+keywords:
+  - argocd
+  - gitops
+  - agent
+maintainers:
+  - name: Argo Project Maintainers
+    url: https://github.com/argoproj-labs/argocd-agent
+kubeVersion: ">=1.24.0-0"
+annotations:
+  charts.openshift.io/name: "Argo CD Agent - Agent Component"

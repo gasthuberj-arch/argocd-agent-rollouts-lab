@@ -1,0 +1,31 @@
+image:
+  repository: quay.io/argoprojlabs/argocd-agent
+  tag: v0.10.0
+
+principal:
+  listen:
+    host: ""
+    port: 8443
+  allowedNamespaces: "*"
+  log:
+    level: "debug"
+  tls:
+    secretName: "argocd-agent-principal-tls"
+    server:
+      rootCaSecretName: "argocd-agent-ca"
+    clientCert:
+      require: true
+      matchSubject: true
+  auth: "mtls:CN=([^,]+)"
+  jwt:
+    allowGenerate: true
+  redisProxy:
+    enabled: true
+  resourceProxy:
+    enabled: true
+
+service:
+  type: NodePort
+  port: 8443
+  targetPort: 8443
+  nodePort: 30443

@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: git-server-init
+  namespace: argocd
+data:
+  init.sh: |
+    #!/bin/sh
+    set -e
+    mkdir -p /git/repo.git
+    cd /git/repo.git
+    if [ ! -f HEAD ]; then
+      git init --bare --shared
+      git config daemon.receivepack true
+    fi
+    exec git daemon --verbose --export-all --base-path=/git --enable=receive-pack --listen=0.0.0.0 --port=9418 /git
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: git-server
+  namespace: argocd
+  labels:
+    app: git-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: git-server
+  template:
+    metadata:
+      labels:
+        app: git-server
+    spec:
+      containers:
+      - name: git
+        image: local-git-server:latest
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/sh", "/scripts/init.sh"]
+        ports:
+        - containerPort: 9418
+          name: git
+        volumeMounts:
+        - name: git-data
+          mountPath: /git
+        - name: scripts
+          mountPath: /scripts
+      volumes:
+      - name: git-data
+        emptyDir: {}
+      - name: scripts
+        configMap:
+          name: git-server-init
+          defaultMode: 0755
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: git-server
+  namespace: argocd
+spec:
+  type: NodePort
+  selector:
+    app: git-server
+  ports:
+  - port: 9418
+    targetPort: 9418
+    nodePort: 30941
+    name: git

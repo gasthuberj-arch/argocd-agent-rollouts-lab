@@ -1,0 +1,10 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Local runtime logs and temporary artifacts
+*.log
+.DS_Store
+
+# GitOps working tree local git repo (automatically initialized by verify_rollouts.py)
+gitops-repo/.git/

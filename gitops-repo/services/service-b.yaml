@@ -1,0 +1,93 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: service-b
+  namespace: demo
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: service-b
+  template:
+    metadata:
+      labels:
+        app: service-b
+    spec:
+      containers:
+      - name: rollouts-demo
+        image: argoproj/rollouts-demo:blue
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+  strategy:
+    canary:
+      canaryService: service-b-canary
+      stableService: service-b-active
+      steps:
+      - setWeight: 30
+      - pause: {} # Manual approval gate
+      - setWeight: 60
+      - pause: { duration: 5s }
+      - analysis:
+          templates:
+          - templateName: service-b-check
+      - setWeight: 100
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-b-active
+  namespace: demo
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+  selector:
+    app: service-b
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-b-canary
+  namespace: demo
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+  selector:
+    app: service-b
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: service-b-check
+  namespace: demo
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  metrics:
+  - name: color-check
+    interval: 2s
+    count: 3
+    failureLimit: 1
+    consecutiveErrorLimit: 1
+    successCondition: result != "red"
+    provider:
+      web:
+        url: "http://service-b-canary.demo.svc.cluster.local:8080/color"
+        timeoutSeconds: 2

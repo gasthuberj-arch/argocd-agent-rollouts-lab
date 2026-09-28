@@ -1,0 +1,15 @@
+image:
+  repository: quay.io/argoprojlabs/argocd-agent
+  tag: v0.10.0
+
+agentMode: "managed"
+logLevel: "debug"
+logFormat: "text"
+server: "k3d-hub-serverlb"
+serverPort: "30443"
+auth: "mtls:any"
+tlsSecretName: "argocd-agent-client-tls"
+tlsRootCASecretName: "argocd-agent-ca"
+tlsClientInSecure: "false"
+enableResourceProxy: true
+redisAddress: "argocd-redis:6379"
